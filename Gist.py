@@ -2,6 +2,9 @@ import requests
 from lib.Conf import Conf
 
 class Gist:
+    def __init__(app):
+        self.app = app
+        
     def update(content):
         conf = Conf()
 
@@ -9,7 +12,6 @@ class Gist:
         token = conf.token
         gist_id = conf.gist_id
         filename = conf.filename
-        content = "# Updated Content\nThis is micky mouse"
 
         # conversions
         url = "https://api.github.com/gists/" + gist_id
