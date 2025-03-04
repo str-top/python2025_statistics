@@ -1,17 +1,13 @@
 import requests
-from lib.Conf import Conf
 
 class Gist:
-    def __init__(app):
+    def __init__(self, app):
         self.app = app
         
     def update(content):
-        conf = Conf()
-
-        # settings
-        token = conf.token
-        gist_id = conf.gist_id
-        filename = conf.filename
+        token = self.app.conf.token
+        gist_id = self.app.conf.gist_id
+        filename = self.app.conf.filename
 
         # conversions
         url = "https://api.github.com/gists/" + gist_id

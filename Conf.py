@@ -3,10 +3,13 @@ import os
 
 class Conf:
 
-	def __init__(self):		
+	def __init__(self, app):
+		self.app = app
 		config = configparser.ConfigParser()
 		config.read("config.ini")
 
-    self.token = config['conf']['token']
-    self.gist_id = config['conf']['gist_id']
-    self.filename = config['conf']['filename']
+		self.api_key = config['onlinetestpad']['api_key']
+
+		self.token = config['github']['token']
+		self.gist_id = config['github']['gist_id']
+		self.filename = config['github']['filename']
