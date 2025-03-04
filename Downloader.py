@@ -1,14 +1,15 @@
 import requests
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 class Downloader:
     def __init__(self, app):
         self.app = app
         self.tests = app.tests
+        self.results = app.results
 
     def downloader(self, url):
         api_key = self.app.conf.api_key
-
         url = "https://api.onlinetestpad.com/" + url
         headers = {"accept": "application/json", "Access-Token": api_key}
 
@@ -22,42 +23,67 @@ class Downloader:
 
     def gather_data(self):
         new_data = False
+        with ThreadPoolExecutor() as executor:
+            results = {}
+            additional_results = {}
 
-        # process tests
-        for test in self.downloader('tests'):
-            test_id = test["id"]
-            test_name = test["name"]
+            future_tests = executor.submit(self.downloader, 'tests')
+            tests = future_tests.result()
 
-            if test_id in self.tests:
-                if self.tests[test_id]["name"] != test_name:
-                    self.tests[test_id]["name"] = test_name   # update test name
+            # Process each test
+            for test in tests:
+                test_id = test["id"]
+                test_name = test["name"]
+
+                new_test = {}
+                new_test["name"] = test["name"]
+                new_test["createdTime"] = test["createdTime"]
+
+                if test_id in self.tests:
+                    if self.tests[test_id]["name"] != test_name:
+                        self.tests[test_id]["name"] = test_name  # update test name
+                        new_data = True
+                else:
+                    self.tests[test_id] = new_test  # add test
                     new_data = True
-                    print(f"Updated name for test ID {test_id}: {test_name}")
-            else:
-                self.tests[test_id] = test # add test
-                self.tests[test_id]["results"] = [] # initialize results
-                new_data = True
-                print(f"Added new test: {self.tests[test_id]}")
+                print(test)
+                results[test_id] = executor.submit(self.downloader, f'tests/{test_id}/results')
 
-            # process results
-            for result in self.downloader(f'tests/{test_id}/results'):
-                result_id = result["resultId"]
+            # Process the results
+            for test_id, future in results.items():
+                results = future.result()
 
-                result_data = {
-                    "resultId": result_id,
-                    "endTime": result["endTime"],
-                    "elapsedSeconds": result["elapsedSeconds"],
-                    "url": result["url"]
-                }
+                # Process results for each test
+                for result in results:
+                    result_id = result["resultId"]
 
-                # process results (additional)
-                detailed_result = self.downloader(f'tests/{test_id}/results/{result_id}')   
+                    result_data = {
+                        "testId": test_id,
+                        "resultId": result["resultId"], 
+                        "endTime": result["endTime"],
+                        "elapsedSeconds": result["elapsedSeconds"],
+                        "url": result["url"]
+                    }
+
+                    # Add result
+                    if result_data not in self.results:
+                        self.results.append(result_data)
+                        new_data = True
+
+                    additional_results[result_id] = executor.submit(self.downloader, f'tests/{test_id}/results/{result_id}')
+
+
+            # process additional results
+            for test_id, future in additional_results.items():
+                detailed_result = future.result()
+
                 if detailed_result:
+                    result_data = {}
                     participant = "Unknown"
                     for question in detailed_result.get("questions", []):
                         if question.get("number") == 1:
                             participant = question["answers"][0]["answer"]
-                            participant = re.sub(r"<.*?>", "", participant)
+                            participant = re.sub(r"<.*?>", "", participant)  # Remove HTML tags
                             break
 
                     score = 0
@@ -65,13 +91,15 @@ class Downloader:
                         if result.get("name") == "Процент правильных ответов (%)":
                             score = result["value"]
                             break
-
                     result_data["participant"] = participant
                     result_data["score"] = score
 
-                if result_data not in self.tests[test_id]["results"]:
-                    self.tests[test_id]["results"].append(result_data)
-                    print(f"Added new result: {result_data}")
-                    new_data = True
+                    test_id = detailed_result["testId"]
+                    result_id = detailed_result["resultId"]
 
-        return new_data
+                    # append additional values to the correct result in self.results
+                    for result in self.results:
+                        if result['testId'] == test_id and result['resultId'] == result_id:
+                            result.update(result_data)
+                            break
+            return new_data

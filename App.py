@@ -6,6 +6,7 @@ import time
 class App:
 	def __init__(self):
 		self.tests = {}  # TEST RESULTS DATA
+		self.results = []
 		self.content = ""
 
 		self.gist = Gist(self)
@@ -20,6 +21,10 @@ class App:
 			if not anything_new:
 				time.sleep(60)
 				continue
+			# for test in self.tests:
+			# 	print(self.tests[test])
+			# for result in self.results:
+			# 	print(result)
 
 			# 2) analyze_data
 			# 3) convert to md
