@@ -4,9 +4,12 @@ class Gist:
     def __init__(self, app):
         self.app = app
         
-    def update(content):
+    def update(self):
+        self.request(self.app.conf.gist_id)
+        self.request(self.app.conf.gist_id_admin)
+
+    def request(self, gist_id):
         token = self.app.conf.token
-        gist_id = self.app.conf.gist_id
         filename = self.app.conf.filename
 
         # conversions
@@ -14,7 +17,7 @@ class Gist:
         data = {
             "files": {
                 filename: {
-                    "content": content
+                    "content": self.app.content
                 }
             }
         }

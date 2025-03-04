@@ -1,5 +1,6 @@
 import requests
 import re
+from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 class Downloader:
@@ -7,6 +8,14 @@ class Downloader:
         self.app = app
         self.tests = app.tests
         self.results = app.results
+
+    # Function to fix the ISO 8601 datetime format
+    def fix_isoformat(self, time):
+        if '.' in time:
+            timestamp, microseconds = time.split('.')   # Split the timestamp and microseconds
+            microseconds = microseconds.ljust(6, '0')               # Pad microseconds to 6 digits
+            return f"{timestamp}.{microseconds}"                    # Reassemble the timestamp with fixed microseconds
+        return time + ".000000"                         # Return the string unchanged if no microseconds part
 
     def downloader(self, url):
         api_key = self.app.conf.api_key
@@ -30,6 +39,12 @@ class Downloader:
             future_tests = executor.submit(self.downloader, 'tests')
             tests = future_tests.result()
 
+            # TODO: check funtionality
+            # check if tests have been deleted
+            for saved_test in self.tests:
+                if saved_test not in tests:
+                    new_data = True
+
             # Process each test
             for test in tests:
                 test_id = test["id"]
@@ -37,7 +52,7 @@ class Downloader:
 
                 new_test = {}
                 new_test["name"] = test["name"]
-                new_test["createdTime"] = test["createdTime"]
+                new_test["createdTime"] = self.fix_isoformat(test["createdTime"])
 
                 if test_id in self.tests:
                     if self.tests[test_id]["name"] != test_name:
@@ -46,9 +61,8 @@ class Downloader:
                 else:
                     self.tests[test_id] = new_test  # add test
                     new_data = True
-                print(test)
                 results[test_id] = executor.submit(self.downloader, f'tests/{test_id}/results')
-
+            # return True
             # Process the results
             for test_id, future in results.items():
                 results = future.result()
@@ -60,7 +74,7 @@ class Downloader:
                     result_data = {
                         "testId": test_id,
                         "resultId": result["resultId"], 
-                        "endTime": result["endTime"],
+                        "endTime": self.fix_isoformat(result["endTime"]),
                         "elapsedSeconds": result["elapsedSeconds"],
                         "url": result["url"]
                     }

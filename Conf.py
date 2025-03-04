@@ -12,4 +12,6 @@ class Conf:
 
 		self.token = config['github']['token']
 		self.gist_id = config['github']['gist_id']
+		self.gist_id_admin = config['github']['gist_id_admin']
 		self.filename = config['github']['filename']
+		self.students = config["onlinetestpad"]["students"].split(", ")
