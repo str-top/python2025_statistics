@@ -1,10 +1,23 @@
 from datetime import datetime, timedelta
+import re
 
 class Analysis:
     def __init__(self, app):
         self.app = app
-        
-    def analyse(self):
+
+    def cleanup_data(self):
+        # Keep only the last attempt for each test
+        for student, data in self.app.students_data.items():
+            latest_attempts = {}
+            for result in data["results"]:
+                test_number = result["test_number"]
+                if test_number not in latest_attempts or result["endTime"] > latest_attempts[test_number]["endTime"]:
+                    latest_attempts[test_number] = result
+
+            # Replace with filtered results
+            self.app.students_data[student]["results"] = list(latest_attempts.values())
+
+    def structure_data(self):
         thirty_days_ago = datetime.now() - timedelta(days=30)
         valid_tests = {}
         valid_results = []
@@ -48,9 +61,11 @@ class Analysis:
             students_data[student_name]["results"].append(test_result)
             students_data[student_name]["quantity"] += 1
             students_data[student_name]["average_score"] += result["score"]
+
+        self.app.students_data = students_data
         
         # Calculate average score and overall score for each student
-        for student, data in students_data.items():
+        for student, data in self.app.students_data.items():
             # Average score
             data["average_score"] /= data["quantity"]
             
@@ -60,3 +75,33 @@ class Analysis:
             
             # Overall score (average score + percentage completed / 2)
             data["overall_score"] = (data["average_score"] + percentage_completed) / 2
+
+        self.cleanup_data()
+
+        # Extracting data
+        students_tests = sorted(
+            [(name, len(data["results"]), data["average_score"]) for name, data in self.app.students_data.items()], 
+            key=lambda x: (-x[1], -x[2])  # Sort by quantity (desc), then by average_score (desc)
+        )
+        self.app.students_tests = [(name, quantity) for name, quantity, _ in students_tests]
+        self.app.students_scores = sorted([(name, data["average_score"]) for name, data in self.app.students_data.items()], key=lambda x: x[1], reverse=True)
+        self.app.students_overall = sorted([(name, data["overall_score"]) for name, data in self.app.students_data.items()], key=lambda x: x[1], reverse=True)
+
+        # list of students test results
+        for name, data in self.app.students_data.items():
+            results = [
+                {
+                    "test_number": result["test_number"],
+                    "url": result["url"],
+                    "score": result["score"],
+                    "short_date": datetime.strptime(result["endTime"], "%Y-%m-%dT%H:%M:%S.%f").strftime("%d.%m")
+                }
+                for result in data["results"]
+            ]
+            self.app.students_results.append((name, results))
+
+        # Extract and sort tests by numerical order
+        self.app.sorted_tests = sorted(
+            [data["name"] for data in valid_tests.values()], 
+            key=lambda x: int(re.search(r"\d+", x).group()) if re.search(r"\d+", x) else float('inf')
+        )

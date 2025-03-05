@@ -4,9 +4,11 @@ class Gist:
     def __init__(self, app):
         self.app = app
         
-    def update(self):
-        self.request(self.app.conf.gist_id)
-        self.request(self.app.conf.gist_id_admin)
+    def update(self, role):
+        if role == 'mentor':
+            self.request(self.app.conf.gist_id_admin)
+        else:
+            self.request(self.app.conf.gist_id)
 
     def request(self, gist_id):
         token = self.app.conf.token

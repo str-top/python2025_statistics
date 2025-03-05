@@ -4,13 +4,14 @@ from Conversion import Conversion
 from Downloader import Downloader
 from Gist import Gist
 import time
+from datetime import datetime
 
 class App:
     def __init__(self):
-        self.tests = {}         # tests data
-        self.results = []       # results data
-        self.students_data = {} # analyzed data
-        self.content = ""       # resulting formatted data
+        # raw data
+        self.tests = {}             # tests data
+        self.results = []           # results data
+        self.time_between_queries = 10
 
         self.gist = Gist(self)
         self.downloader = Downloader(self)
@@ -18,22 +19,56 @@ class App:
         self.analysis = Analysis(self)
         self.conversion = Conversion(self)
 
+    def logger(self, message):
+        short_datetime = datetime.now().strftime("%d.%m.%y %H:%M:%S.%f")[:-3]
+        print(short_datetime, message)
+
     def run(self):
         while True:
-            anything_new = self.downloader.gather_data() # fetch data from onlinetestpad.com
-            if not anything_new:
-                time.sleep(30)
+            # analyzed data
+            self.students_data = {}     # analyzed data
+
+            # data prepared for displaying
+            self.students_results = []  # list of all results for each student
+            self.students_tests = []    # tests completed rating
+            self.students_scores = []   # average score rating
+            self.students_overall = []  # overall score rating
+            self.sorted_tests = []      # list of tests for last 30 days
+
+            self.content = ""           # resulting formatted data
+
+            try:
+                self.downloader.gather() # fetch data from onlinetestpad.com
+            except Exception as e:
+                self.logger(f'ERROR: {e}')
+                self.logger(f'ERROR. Sleeping for {self.time_between_queries} seconds')
+                time.sleep(self.time_between_queries)
                 continue
+
+            if not self.downloader.new_data:
+                self.logger(f'Nothing new, sleeping for {self.time_between_queries} seconds')
+                time.sleep(self.time_between_queries)
+                continue
+            print('before analysis')
+            self.analysis.structure_data()  # prepare data            
+            # self.analysis.create_ratings()
+
+            # for student in self.students_data:
+            #     print(student, self.students_data[student])
+            # print(self.students_results)
+
+
+            print('before 1 conversion')
+            self.conversion.convert('mentor') # convert data to markdown
+            self.gist.update('mentor')        # upload data to gist
             
-            self.analysis.analyse()  # prepare data
+            print('before 2 conversion')
+            self.conversion.convert('student')
+            self.gist.update('student')
 
-            for student in self.students_data:
-                print(student, self.students_data[student])
+            print('after 2 conversion')
+            # break
 
-            self.conversion.convert() # convert data to markdown
-
-            self.gist.update() # upload data to gist
-            break
 
 app = App()
 app.run()
