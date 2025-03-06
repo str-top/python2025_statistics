@@ -1,7 +1,9 @@
+from log import get_logger
 
 class Conversion:
     def __init__(self, app):
         self.app = app
+        self.logger = get_logger(__name__)
         
     def calculate_gap(self, sorted_list):
         """Calculate percentage gap between students for overall ranking."""

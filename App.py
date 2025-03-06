@@ -5,9 +5,12 @@ from Downloader import Downloader
 from Gist import Gist
 import time
 from datetime import datetime
+from log import get_logger
 
 class App:
     def __init__(self):
+        self.logger = get_logger(__name__)
+
         # raw data
         self.tests = {}             # tests data
         self.results = []           # results data
@@ -40,13 +43,13 @@ class App:
             try:
                 self.downloader.gather() # fetch data from onlinetestpad.com
             except Exception as e:
-                self.logger(f'ERROR: {e}')
-                self.logger(f'ERROR. Sleeping for {self.time_between_queries} seconds')
+                self.logger.info(f'ERROR: {e}')
+                self.logger.info(f'ERROR. Sleeping for {self.time_between_queries} seconds')
                 time.sleep(self.time_between_queries)
                 continue
 
             if not self.downloader.new_data:
-                self.logger(f'Nothing new, sleeping for {self.time_between_queries} seconds')
+                self.logger.info(f'Nothing new, sleeping for {self.time_between_queries} seconds')
                 time.sleep(self.time_between_queries)
                 continue
             print('before analysis')
@@ -57,22 +60,22 @@ class App:
             #     print(student, self.students_data[student])
             # print(self.students_results)
 
-
-            print('before 1 conversion')
             self.conversion.convert('mentor') # convert data to markdown
             self.gist.update('mentor')        # upload data to gist
             
-            print('before 2 conversion')
             self.conversion.convert('student')
             self.gist.update('student')
 
-            print('after 2 conversion')
-            # break
-
+            self.logger.info(f'Sleeping after successful program iteration for {self.time_between_queries} seconds')
+            time.sleep(self.time_between_queries)
 
 app = App()
 app.run()
 
+# TODO:
+# - run 24/7 in vps
+# - refactor code
+# - view last 15 results
 
 # TESTS DATA STRUCTURE:
 # {"pvomsfav2jpts":

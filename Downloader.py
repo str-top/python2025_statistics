@@ -3,10 +3,12 @@ import re
 import time
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from log import get_logger
 
 class Downloader:
     def __init__(self, app):
         self.app = app
+        self.logger = get_logger(__name__)
 
     def fix_isoformat(self, time):
         if '.' in time:
@@ -23,8 +25,8 @@ class Downloader:
         response = requests.get(url, headers=headers)
         if response.status_code != 200:
             print("Error:", response.status_code, response.text)
-            return []
-
+            self.logger.info(f'ERROR (Downloader -> api_downloader): {response.status_code} """{response.text}""" was added')
+            raise HTTPException(f'Error when accessing api of: {url}')
         return response.json()
 
     def gather_tests(self, future_tests):
@@ -44,18 +46,18 @@ class Downloader:
                 if old_test_name != new_test_name:
                     old_test_name = new_test_name  # update test name 
                     self.new_data = True
-                    self.app.logger(f'Name of test {new_test_id} "{old_test_name}" was updated to "{new_test_name}"')
+                    self.logger.info(f'Name of test {new_test_id} "{old_test_name}" was updated to "{new_test_name}"')
             else:
                 self.app.tests[new_test_id] = composed_test_data  # add new test
                 self.new_data = True
-                self.app.logger(f'New test {new_test_id} "{new_test_name}" was added')
+                self.logger.info(f'New test {new_test_id} "{new_test_name}" was added')
 
             composed_new_tests[new_test_id] = composed_test_data
 
         # remove deleted tests
         for old_test in list(self.app.tests):
             if old_test not in composed_new_tests:
-                self.app.logger(f'Test {old_test} "{self.app.tests[old_test]["name"]}" was deleted')
+                self.logger.info(f'Test {old_test} "{self.app.tests[old_test]["name"]}" was deleted')
                 del self.app.tests[old_test]
                 self.new_data = True
 
@@ -111,13 +113,13 @@ class Downloader:
 
     def gather(self):
         self.new_data = False
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            self.app.logger('Starting gathering sequence')
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            self.logger.info('Starting gathering sequence')
 
             # gather tests
             future_tests = executor.submit(self.api_downloader, 'tests')
             self.gather_tests(future_tests)
-            self.app.logger(f'Gathered {len(self.app.tests)} tests. Gathering results ...')
+            self.logger.info(f'Gathered {len(self.app.tests)} tests. Gathering results ...')
             
             # gather results
             results_fetcher = {}
@@ -143,13 +145,13 @@ class Downloader:
                 if new_result not in self.app.results:
                     self.app.results.append(new_result)
                     self.new_data = True
-                    self.app.logger(f"New result {new_result['resultId']} in test {new_result['testId']} was added")
+                    self.logger.info(f"New result {new_result['resultId']} in test {new_result['testId']} was added")
 
             # remove deleted results
             for old_result in self.app.results:
                 if old_result not in new_results:
                     self.app.results.remove(old_result)
                     self.new_data = True
-                    self.app.logger(f"Result {old_result['resultId']} in test {old_result['testId']} was removed")
+                    self.logger.info(f"Result {old_result['resultId']} in test {old_result['testId']} was removed")
 
-            self.app.logger(f'Gathered {len(self.app.results)} results')
+            self.logger.info(f'Gathered {len(self.app.results)} results')

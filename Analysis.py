@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta
 import re
+from log import get_logger
 
 class Analysis:
     def __init__(self, app):
         self.app = app
+        self.logger = get_logger(__name__)
 
     def cleanup_data(self):
         # Keep only the last attempt for each test
