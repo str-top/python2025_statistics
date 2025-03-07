@@ -1,4 +1,5 @@
 from log import get_logger
+from datetime import datetime
 
 class Conversion:
     def __init__(self, app):
@@ -103,7 +104,16 @@ class Conversion:
                 submitted_tests += "\n"  # Отделяем группы пустой строкой
 
             submitted_tests += "```\n"
-        
+
+        # last results
+        last_results = "## Последние результаты\n\n```\n"
+        for end_time, test_number, student in self.app.last_15_results:
+            formatted_time = end_time.strftime("%d.%m, %H:%M")  # Convert datetime to "HH:MM"
+            last_results += f"{formatted_time} {test_number} {student}\n"
+        last_results += "```"
+
         # Concatenating final output
+        formatted_time = datetime.now().strftime("%H:%M:%S")
         title = "# Результаты практических занятий за последние 30 дней"
-        self.app.content = f"{title}\n{overall_ranking}\n{tests_ranking}\n{score_ranking}\n{practical_tests}\n\n{submitted_tests}"
+        title += f'\n\n<div align="right">обновлено: {formatted_time} GMT+5</div>\n\n'
+        self.app.content = f"{title}\n{overall_ranking}\n{tests_ranking}\n{score_ranking}\n{practical_tests}\n\n{submitted_tests}\n\n{last_results}"

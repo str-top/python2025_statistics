@@ -27,6 +27,7 @@ class App:
         print(short_datetime, message)
 
     def run(self):
+        self.logger.info('Starting app')
         while True:
             # analyzed data
             self.students_data = {}     # analyzed data
@@ -37,14 +38,15 @@ class App:
             self.students_scores = []   # average score rating
             self.students_overall = []  # overall score rating
             self.sorted_tests = []      # list of tests for last 30 days
+            self.last_15_results = []
 
             self.content = ""           # resulting formatted data
 
             try:
                 self.downloader.gather() # fetch data from onlinetestpad.com
             except Exception as e:
-                self.logger.info(f'ERROR: {e}')
-                self.logger.info(f'ERROR. Sleeping for {self.time_between_queries} seconds')
+                self.logger.error(f'ERROR: {e}')
+                self.logger.error(f'ERROR. Sleeping for {self.time_between_queries} seconds')
                 time.sleep(self.time_between_queries)
                 continue
 
@@ -73,9 +75,11 @@ app = App()
 app.run()
 
 # TODO:
-# - run 24/7 in vps
+# + run 24/7 in vps
 # - refactor code
-# - view last 15 results
+# + view last 15 results
+# - auto pull latest version from github
+# + display latest update time
 
 # TESTS DATA STRUCTURE:
 # {"pvomsfav2jpts":

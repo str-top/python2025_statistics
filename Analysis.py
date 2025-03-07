@@ -107,3 +107,16 @@ class Analysis:
             [data["name"] for data in valid_tests.values()], 
             key=lambda x: int(re.search(r"\d+", x).group()) if re.search(r"\d+", x) else float('inf')
         )
+
+        # Collect all test results from all students
+        all_results = [
+            (datetime.fromisoformat(res["endTime"]), res["test_number"], student)
+            for student, data in students_data.items()
+            for res in data["results"]
+        ]
+
+        # Sort by endTime in descending order (latest first)
+        all_results.sort(reverse=True, key=lambda x: x[0])
+
+        # Get the last 15 results
+        self.app.last_15_results = all_results[:15]
