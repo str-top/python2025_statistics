@@ -135,6 +135,9 @@ class Analysis:
         self.days_of_results = datetime.now() - timedelta(days=self.app.conf.days_of_results)
         self.construct_students_data()
         self.remove_duplicate_attempts()
+        num_students = len(self.app.students_data)
+        total_results = sum(len(student["results"]) for student in self.app.students_data.values())
+        self.logger.info(f'Constructed data structure with {num_students} students and {total_results} results')
         
         self.construct_scores()
         self.construct_overall_scores_rating()
