@@ -78,6 +78,3 @@ class App:
 
 app = App()
 app.run()
-
-# TODO:
-# - auto pull latest version from github
