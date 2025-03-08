@@ -12,6 +12,7 @@ class Conf:
 
         self.api_key = config['onlinetestpad']['api_key']
         self.students = config["onlinetestpad"]["students"].split(", ")
+        self.days_of_results = int(config["onlinetestpad"]["days_of_results"])
 
         self.token = config['github']['token']
         self.gist_id = config['github']['gist_id']

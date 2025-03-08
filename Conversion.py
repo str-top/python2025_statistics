@@ -1,5 +1,5 @@
 from log import get_logger
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 class Conversion:
     def __init__(self, app):
@@ -112,8 +112,11 @@ class Conversion:
             last_results += f"{formatted_time} {test_number} {student}\n"
         last_results += "```"
 
-        # Concatenating final output
-        formatted_time = datetime.now().strftime("%H:%M:%S")
-        title = "# Результаты практических занятий за последние 30 дней"
+        # show edited time
+        gmt_plus_5 = timezone(timedelta(hours=5))
+        formatted_time = datetime.now(gmt_plus_5).strftime("%H:%M:%S")
+        title = f"# Результаты практических занятий за последние {self.app.conf.days_of_results} дней"
         title += f'\n\n<div align="right">обновлено: {formatted_time} GMT+5</div>\n\n'
+        
+        # Concatenating final output
         self.app.content = f"{title}\n{overall_ranking}\n{tests_ranking}\n{score_ranking}\n{practical_tests}\n\n{submitted_tests}\n\n{last_results}"

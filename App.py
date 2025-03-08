@@ -22,10 +22,6 @@ class App:
         self.analysis = Analysis(self)
         self.conversion = Conversion(self)
 
-    def logger(self, message):
-        short_datetime = datetime.now().strftime("%d.%m.%y %H:%M:%S.%f")[:-3]
-        print(short_datetime, message)
-
     def run(self):
         self.logger.info('Starting app')
         while True:
@@ -55,13 +51,8 @@ class App:
                 time.sleep(self.time_between_queries)
                 continue
             print('before analysis')
-            self.analysis.structure_data()  # prepare data            
-            # self.analysis.create_ratings()
-
-            # for student in self.students_data:
-            #     print(student, self.students_data[student])
-            # print(self.students_results)
-
+            self.analysis.construct()  # prepare data
+            
             self.conversion.convert('mentor') # convert data to markdown
             self.gist.update('mentor')        # upload data to gist
             
