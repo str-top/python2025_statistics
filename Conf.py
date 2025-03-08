@@ -8,7 +8,7 @@ class Conf:
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         CONFIG_PATH = os.path.join(BASE_DIR, "config.ini")
         config = configparser.ConfigParser()
-        config.read("config.ini")
+        config.read("config.ini", encoding="utf-8")
 
         self.api_key = config['onlinetestpad']['api_key']
         self.students = config["onlinetestpad"]["students"].split(", ")

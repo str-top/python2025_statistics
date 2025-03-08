@@ -138,4 +138,8 @@ class Conversion:
         last_results = self.format_last_results()
         
         # Concatenating final output
-        self.app.content = f"{title}\n{overall_rating}\n{tests_rating}\n{score_rating}\n{test_list}\n\n{submitted_tests}\n\n{last_results}"
+        text = f"{title}\n{overall_rating}\n{tests_rating}\n{score_rating}\n{test_list}\n\n{submitted_tests}\n\n{last_results}"
+        self.app.content = text
+
+        line_count = text.count("\n") + 1
+        self.logger.info(f'Converted prepared data to {line_count} lines for *.md file')

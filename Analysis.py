@@ -28,9 +28,9 @@ class Analysis:
 
     def construct_students_data(self):
         students_data = self.app.students_data
-
         valid_tests = self.cleanup_tests()
         valid_results = self.cleanup_results()
+        self.logger.info(f'Constructing students data. Confirmed valid_tests: {len(valid_tests)}, valid_results: {len(valid_results)}')
 
         # Process the results data
         for result in valid_results:
@@ -57,6 +57,7 @@ class Analysis:
             students_data[student_name]["results"].append(test_result)
             students_data[student_name]["quantity"] += 1
             students_data[student_name]["average_score"] += result["score"]
+        self.logger.debug(f'Constructed students data. Data size: {len(self.app.students_data)}')
 
     def remove_duplicate_attempts(self):
         # Keep only the last attempt for each test
@@ -137,7 +138,7 @@ class Analysis:
         self.remove_duplicate_attempts()
         num_students = len(self.app.students_data)
         total_results = sum(len(student["results"]) for student in self.app.students_data.values())
-        self.logger.info(f'Constructed data structure with {num_students} students and {total_results} results')
+        self.logger.info(f'Data structure with {num_students} students and {total_results} results has been constructed.')
         
         self.construct_scores()
         self.construct_overall_scores_rating()

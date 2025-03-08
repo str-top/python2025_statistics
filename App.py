@@ -6,6 +6,7 @@ from Gist import Gist
 import time
 from datetime import datetime
 from log import get_logger
+import os
 
 class App:
     def __init__(self):
@@ -50,7 +51,6 @@ class App:
                 self.logger.info(f'Nothing new, sleeping for {self.time_between_queries} seconds')
                 time.sleep(self.time_between_queries)
                 continue
-            print('before analysis')
             self.analysis.construct()  # prepare data
             
             self.conversion.convert('mentor') # convert data to markdown
@@ -59,6 +59,20 @@ class App:
             self.conversion.convert('student')
             self.gist.update('student')
 
+            # trim log file
+            log_file = "python2025_statistics.log"
+            BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+            full_path = os.path.join(BASE_DIR, log_file)
+            max_size = 10 * 1024 * 1024  # in MB
+            if os.path.exists(full_path) and os.path.getsize(full_path) > max_size:
+                with open(full_path, "rb") as f:
+                    f.seek(-max_size // 2, os.SEEK_END)  # Move to last half
+                    f.readline()  # Ensure we start at the next full line
+                    trimmed_data = f.read()  # Read the remaining part of the file
+                with open(full_path, "wb") as f:  # Overwrite file with trimmed content
+                    f.write(trimmed_data)
+                self.logger.info(f'Truncated log file to {os.path.getsize(full_path) / 1024 / 1024:.2f} MB')
+
             self.logger.info(f'Sleeping after successful program iteration for {self.time_between_queries} seconds')
             time.sleep(self.time_between_queries)
 
@@ -66,31 +80,4 @@ app = App()
 app.run()
 
 # TODO:
-# + run 24/7 in vps
-# - refactor code
-# + view last 15 results
 # - auto pull latest version from github
-# + display latest update time
-
-# TESTS DATA STRUCTURE:
-# {"pvomsfav2jpts":
-#  {"name": "Test 1. Modifiers",
-#   "createdTime": "2025-02-27T15:39:28.039268",
-#  },
-#  ...
-# }
-
-
-# RESULTS DATA STRUCTURE:
-# [
-# {
-#  "resultId": "res_102"
-#  "testId": "test_1"
-#  "endTime": "2024-03-04T11:00:00Z"
-#  "elapsedSeconds": 2200
-#  "url": "http://example.com/result/102"
-#  "participant": "Bob"
-#  "score": 90
-# },
-# ...
-# ]

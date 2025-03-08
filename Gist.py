@@ -1,8 +1,10 @@
 import requests
+from log import get_logger
 
 class Gist:
     def __init__(self, app):
         self.app = app
+        self.logger = get_logger(__name__)
         
     def update(self, role):
         if role == 'mentor':
@@ -27,4 +29,8 @@ class Gist:
 
         # request
         a = requests.patch(url, json=data, headers=headers)
-        print(a)
+    
+        if a.status_code in [200, 201, 204]:
+            self.logger.info(f'Successfully uploaded file to gist')
+        else:
+            self.logger.error(f'Upload to gist failed! Status code: {a.status_code}, Response: {a.text}"')
