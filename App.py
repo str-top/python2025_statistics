@@ -53,11 +53,17 @@ class App:
                 continue
             self.analysis.construct()  # prepare data
             
-            self.conversion.convert('mentor') # convert data to markdown
-            self.gist.update('mentor')        # upload data to gist
-            
-            self.conversion.convert('student')
-            self.gist.update('student')
+            try:
+                self.conversion.convert('mentor') # convert data to markdown
+                self.gist.update('mentor')        # upload data to gist
+                
+                self.conversion.convert('student')
+                self.gist.update('student')
+            except Exception as e:
+                self.logger.error(f'ERROR: {e}')
+                self.logger.error(f'ERROR. Sleeping for {self.time_between_queries} seconds')
+                time.sleep(self.time_between_queries)
+                continue
 
             # trim log file
             log_file = "python2025_statistics.log"
