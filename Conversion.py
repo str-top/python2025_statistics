@@ -15,14 +15,15 @@ class Conversion:
 
     def format_overall_rating(self):
         # Calculate percentage gap between students
-        overall_gaps = []
-        for i in range(len(self.app.students_overall) - 1):
-            gap = round(((self.app.students_overall[i][1] - self.app.students_overall[i + 1][1]) / self.app.students_overall[i + 1][1]) * 100)
+        overall_gaps = [0]  # No gap for the first student
+        for i in range(1, len(self.app.students_overall)):
+            prev_score = self.app.students_overall[i - 1][1]
+            current_score = self.app.students_overall[i][1]
+            gap = round(((prev_score - current_score) / prev_score * 100))  # Corrected formula
             overall_gaps.append(gap)
-        overall_gaps.append(0)  # No gap for the last student
 
-        # format data
-        overall_rating = "## Общий рейтинг студентов\nВ скобках указан процент отрыва от следующего студента\n```\n"
+        # Format data
+        overall_rating = "## Общий рейтинг студентов\nВ скобках указан процент отставания от предыдущего студента\n```\n"
         for i, (name, score) in enumerate(self.app.students_overall):
             gap_text = f" ({overall_gaps[i]}%)" if overall_gaps[i] > 0 else ""
             overall_rating += f"{i + 1}. {name:<10} {round(score)}%{gap_text}\n"

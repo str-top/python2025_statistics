@@ -86,6 +86,4 @@ app = App()
 app.run()
 
 # TODO:
-# + add date to last updated time
 # - fix wrong result date in log
-# + check results for changes in score
