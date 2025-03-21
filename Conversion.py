@@ -39,10 +39,15 @@ class Conversion:
         return tests_rating
 
     def format_average_score_rating(self):
+        # Calculate the threshold for half of the tests
+        half_tests_threshold = len(self.app.students_tests) / 2
+
         # Formatting average score rating
         score_rating = "## Рейтинг по проценту правильных ответов\n```\n"
         for i, (name, score) in enumerate(self.app.students_scores):
-            score_rating += f"{i + 1}. {name:<10} {round(score)}%\n"
+            # Check if the student has completed at least half of the tests
+            if self.app.students_data[name]["quantity"] >= half_tests_threshold:
+                score_rating += f"{i + 1}. {name:<10} {round(score)}%\n"
         score_rating += "```\n"
         return score_rating
 

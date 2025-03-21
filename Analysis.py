@@ -67,20 +67,6 @@ class Analysis:
             # Replace with filtered results
             self.app.students_data[student]["results"] = list(latest_attempts.values())
 
-    # def construct_scores(self):
-    #     # Calculate average score and overall score for each student
-    #     for student, data in self.app.students_data.items():
-    #         # Average score
-    #         data["average_score"] /= data["quantity"]
-            
-    #         # Calculate percentage of completed tests
-    #         unique_test_ids = {result["test_number"] for result in data["results"]}
-    #         percentage_completed = len(unique_test_ids) / len(self.valid_tests) * 100
-            
-    #         # Overall score (average score + percentage completed / 2)
-    #         data["overall_score"] = (data["average_score"] + percentage_completed) / 2
-
-
     def construct_scores(self):
         # Calculate average score and overall score for each student
         for student, data in self.app.students_data.items():
@@ -105,8 +91,6 @@ class Analysis:
 
             # Calculate overall score (average score + percentage completed / 2)
             data["overall_score"] = (data["average_score"] + percentage_completed) / 2
-
-
 
     def construct_results_list_for_each_student(self):
         # list of students test results
