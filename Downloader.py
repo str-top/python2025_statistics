@@ -140,12 +140,18 @@ class Downloader:
                         new_result.update(new_additional_result)
                         break
 
-            # add new results
+            # add new results and check for score changes
             for new_result in new_results:
-                if new_result not in self.app.results:
+                existing_result = next((result for result in self.app.results if result['resultId'] == new_result['resultId']), None)
+                if existing_result is None:
                     self.app.results.append(new_result)
                     self.new_data = True
                     self.logger.info(f"New result {new_result['resultId']} in test {new_result['testId']} was added")
+                else:
+                    if existing_result['score'] != new_result['score']:
+                        existing_result.update(new_result)
+                        self.new_data = True
+                        self.logger.info(f"Result {new_result['resultId']} in test {new_result['testId']} was updated with a new score")
 
             # remove deleted results
             for old_result in self.app.results:

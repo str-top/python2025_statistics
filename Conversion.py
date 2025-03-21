@@ -8,7 +8,7 @@ class Conversion:
 
     def format_title(self):
         gmt_plus_5 = timezone(timedelta(hours=5))
-        formatted_time = datetime.now(gmt_plus_5).strftime("%H:%M:%S")
+        formatted_time = datetime.now(gmt_plus_5).strftime("%d.%m %H:%M:%S")
         title = f"# Результаты практических занятий за последние {self.app.conf.days_of_results} дней"
         title += f'\n\n<div align="right">обновлено: {formatted_time} GMT+5</div>\n\n'
         return title
