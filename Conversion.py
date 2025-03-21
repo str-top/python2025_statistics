@@ -44,10 +44,12 @@ class Conversion:
 
         # Formatting average score rating
         score_rating = "## Рейтинг по проценту правильных ответов\n```\n"
-        for i, (name, score) in enumerate(self.app.students_scores):
+        rank = 1  # Separate counter for ranking index
+        for name, score in self.app.students_scores:
             # Check if the student has completed at least half of the tests
             if self.app.students_data[name]["quantity"] >= half_tests_threshold:
-                score_rating += f"{i + 1}. {name:<10} {round(score)}%\n"
+                score_rating += f"{rank}. {name:<10} {round(score)}%\n"
+                rank += 1  # Increment the ranking index only for included students
         score_rating += "```\n"
         return score_rating
 
