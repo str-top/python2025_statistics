@@ -47,16 +47,12 @@ class Analysis:
 
             if student_name not in students_data:
                 students_data[student_name] = {
-                    "quantity": 0,
-                    "average_score": 0,
-                    "overall_score": 0,
-                    "results": []
+                    "results": []  # Only store results here; quantity and scores will be calculated later
                 }
 
-            # Add test result to the students results
+            # Add test result to the student's results
             students_data[student_name]["results"].append(test_result)
-            students_data[student_name]["quantity"] += 1
-            students_data[student_name]["average_score"] += result["score"]
+
         self.logger.debug(f'Constructed students data. Data size: {len(self.app.students_data)}')
 
     def remove_duplicate_attempts(self):
@@ -71,18 +67,46 @@ class Analysis:
             # Replace with filtered results
             self.app.students_data[student]["results"] = list(latest_attempts.values())
 
+    # def construct_scores(self):
+    #     # Calculate average score and overall score for each student
+    #     for student, data in self.app.students_data.items():
+    #         # Average score
+    #         data["average_score"] /= data["quantity"]
+            
+    #         # Calculate percentage of completed tests
+    #         unique_test_ids = {result["test_number"] for result in data["results"]}
+    #         percentage_completed = len(unique_test_ids) / len(self.valid_tests) * 100
+            
+    #         # Overall score (average score + percentage completed / 2)
+    #         data["overall_score"] = (data["average_score"] + percentage_completed) / 2
+
+
     def construct_scores(self):
         # Calculate average score and overall score for each student
         for student, data in self.app.students_data.items():
-            # Average score
-            data["average_score"] /= data["quantity"]
-            
+            # Initialize quantity and average_score
+            data["quantity"] = len(data["results"])  # Number of results (tests taken)
+            data["average_score"] = 0  # Initialize average score
+
+            # Calculate total score
+            total_score = 0
+            for result in data["results"]:
+                total_score += result["score"]
+
+            # Calculate average score
+            if data["quantity"] > 0:  # Avoid division by zero
+                data["average_score"] = total_score / data["quantity"]
+            else:
+                data["average_score"] = 0  # Default to 0 if no results are available
+
             # Calculate percentage of completed tests
             unique_test_ids = {result["test_number"] for result in data["results"]}
             percentage_completed = len(unique_test_ids) / len(self.valid_tests) * 100
-            
-            # Overall score (average score + percentage completed / 2)
+
+            # Calculate overall score (average score + percentage completed / 2)
             data["overall_score"] = (data["average_score"] + percentage_completed) / 2
+
+
 
     def construct_results_list_for_each_student(self):
         # list of students test results
