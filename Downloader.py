@@ -1,7 +1,7 @@
 import requests
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from log import get_logger
 
@@ -16,6 +16,27 @@ class Downloader:
             microseconds = microseconds.ljust(6, '0')   # Pad microseconds to 6 digits
             return f"{timestamp}.{microseconds}"        # Reassemble the timestamp with fixed microseconds
         return time + ".000000"                         # Return the string unchanged if no microseconds part
+
+    def fix_isoformat(self, time):
+        if '.' in time:
+            timestamp, microseconds = time.split('.')       # Split the timestamp and microseconds
+            microseconds = microseconds.rstrip('Z')         # Remove Z if present
+            microseconds = microseconds.ljust(6, '0')[:6]   # Pad to exactly 6 digits
+            fixed_time = f"{timestamp}.{microseconds}"      # Reassemble the timestamp with fixed microseconds
+        else:
+            fixed_time = time + ".000000"                   # Return the string unchanged if no microseconds part
+        
+        if fixed_time.endswith('Z'):
+            dt = datetime.fromisoformat(fixed_time.replace('Z', '+00:00'))
+        else:
+            dt = datetime.fromisoformat(fixed_time)
+        
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        
+        utc_plus_5 = dt.astimezone(timezone(timedelta(hours=5))) # Convert to UTC+5
+        
+        return str(utc_plus_5.isoformat(timespec='microseconds'))
 
     def api_downloader(self, url):
         api_key = self.app.conf.api_key

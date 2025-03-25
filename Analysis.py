@@ -10,9 +10,10 @@ class Analysis:
     def cleanup_tests(self):
         self.valid_tests = {}
         for testId, test in self.app.tests.items():
-            if datetime.fromisoformat(test["createdTime"]) > self.days_of_results:   # Remove tests created more than 30 days ago
+            created_time = datetime.fromisoformat(test["createdTime"])
+            if created_time.replace(tzinfo=None) > self.days_of_results.replace(tzinfo=None):
                 try:
-                    test_number = int(test["name"].split(".")[0])               # Remove tests with invalid names
+                    test_number = int(test["name"].split(".")[0])
                     self.valid_tests[testId] = test
                 except:
                     pass
@@ -21,8 +22,9 @@ class Analysis:
     def cleanup_results(self):
         valid_results = []
         for result in self.app.results:
-            if datetime.fromisoformat(result["endTime"]) > self.days_of_results:     # Remove results created more than 30 days ago
-                if result["participant"] in self.app.conf.students:             # remove results with wrong participant
+            end_time = datetime.fromisoformat(result["endTime"])
+            if end_time.replace(tzinfo=None) > self.days_of_results.replace(tzinfo=None):
+                if result["participant"] in self.app.conf.students:
                     valid_results.append(result)
         return valid_results
 
@@ -95,15 +97,19 @@ class Analysis:
     def construct_results_list_for_each_student(self):
         # list of students test results
         for name, data in self.app.students_data.items():
-            results = [
-                {
+            results = []
+            for result in data["results"]:
+                try:
+                    dt = datetime.fromisoformat(result["endTime"])
+                except ValueError:
+                    dt = datetime.strptime(result["endTime"], "%Y-%m-%dT%H:%M:%S.%f")
+                
+                results.append({
                     "test_number": result["test_number"],
                     "url": result["url"],
                     "score": result["score"],
-                    "short_date": datetime.strptime(result["endTime"], "%Y-%m-%dT%H:%M:%S.%f").strftime("%d.%m")
-                }
-                for result in data["results"]
-            ]
+                    "short_date": dt.strftime("%d.%m")
+                })
             self.app.students_results.append((name, results))
 
     def construct_last_tests(self):
@@ -141,7 +147,8 @@ class Analysis:
         self.app.students_tests = [(name, quantity) for name, quantity, _ in students_tests]
 
     def construct(self):
-        self.days_of_results = datetime.now() - timedelta(days=self.app.conf.days_of_results)
+        self.days_of_results = datetime.now().replace(tzinfo=None) - timedelta(days=self.app.conf.days_of_results)
+        # Rest of the method remains exactly the same
         self.construct_students_data()
         self.remove_duplicate_attempts()
         num_students = len(self.app.students_data)
