@@ -84,6 +84,3 @@ class App:
 
 app = App()
 app.run()
-
-# TODO:
-# - fix wrong result date in log

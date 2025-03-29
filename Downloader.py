@@ -67,11 +67,11 @@ class Downloader:
                 if old_test_name != new_test_name:
                     old_test_name = new_test_name  # update test name 
                     self.new_data = True
-                    self.logger.info(f'Name of test {new_test_id} "{old_test_name}" was updated to "{new_test_name}"')
+                    self.logger.info(f'Name of test "{old_test_name}" was updated to "{new_test_name}"')
             else:
                 self.app.tests[new_test_id] = composed_test_data  # add new test
                 self.new_data = True
-                self.logger.info(f'New test {new_test_id} "{new_test_name}" was added')
+                self.logger.info(f'New test "{new_test_name}" was added')
 
             composed_new_tests[new_test_id] = composed_test_data
 
@@ -114,10 +114,11 @@ class Downloader:
             # get participant name
             participant = "Unknown"
             for question in new_detailed_result.get("questions", []):
-                if question.get("number") == 1:
-                    participant = question["answers"][0]["answer"]
-                    participant = re.sub(r"<.*?>", "", participant)
-                    break
+                if "Кто вы?" in question.get("text", ""):  # Check if question contains "Кто вы?"
+                    if question.get("answers") and len(question["answers"]) > 0:
+                        participant = question["answers"][0]["answer"]
+                        participant = re.sub(r"<.*?>", "", participant)  # Remove HTML tags
+                        break
             composed_result_data["participant"] = participant
 
             # get participant score
@@ -132,6 +133,13 @@ class Downloader:
 
         return composed_new_additional_results
 
+    def get_test_id_to_number(self):
+        test_id_map = {}
+        for test_id, test_data in self.app.tests.items():
+            number_part = test_data['name'].split('.')[0]
+            test_id_map[test_id] = int(number_part) if number_part.isdigit() else None
+        return test_id_map
+
     def gather(self):
         self.new_data = False
         with ThreadPoolExecutor(max_workers=4) as executor:
@@ -140,7 +148,10 @@ class Downloader:
             # gather tests
             future_tests = executor.submit(self.api_downloader, 'tests')
             self.gather_tests(future_tests)
-            self.logger.info(f'Gathered {len(self.app.tests)} tests. Gathering results ...')
+            test_id_to_number = self.get_test_id_to_number()
+            test_numbers = [num for num in test_id_to_number.values() if num is not None]
+            test_numbers_str = ", ".join(map(str, sorted(test_numbers)))
+            self.logger.info(f'Gathered {len(self.app.tests)} tests ({test_numbers_str}). Gathering results ...')
             
             # gather results
             results_fetcher = {}
@@ -164,21 +175,24 @@ class Downloader:
             # add new results and check for score changes
             for new_result in new_results:
                 existing_result = next((result for result in self.app.results if result['resultId'] == new_result['resultId']), None)
+                test_number = self.get_test_id_to_number().get(new_result['testId'], '0')
+
                 if existing_result is None:
                     self.app.results.append(new_result)
                     self.new_data = True
-                    self.logger.info(f"New result {new_result['resultId']} in test {new_result['testId']} was added")
+                    self.logger.info(f"New result {new_result['resultId']} in test #{test_number} was added")
                 else:
                     if existing_result['score'] != new_result['score']:
                         existing_result.update(new_result)
                         self.new_data = True
-                        self.logger.info(f"Result {new_result['resultId']} in test {new_result['testId']} was updated with a new score")
+                        self.logger.info(f"Result {new_result['resultId']} in test #{test_number} was updated with a new score")
 
-            # remove deleted results
-            for old_result in self.app.results:
+            # Remove deleted results
+            for old_result in self.app.results[:]:  # Use a copy of the list to avoid issues while iterating and modifying
                 if old_result not in new_results:
                     self.app.results.remove(old_result)
                     self.new_data = True
-                    self.logger.info(f"Result {old_result['resultId']} in test {old_result['testId']} was removed")
+                    test_number = self.get_test_id_to_number().get(old_result['testId'], '0')
+                    self.logger.info(f"Result {old_result['resultId']} in test #{test_number} was removed")
 
             self.logger.info(f'Gathered {len(self.app.results)} results')

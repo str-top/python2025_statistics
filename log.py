@@ -4,6 +4,7 @@ import logging
 logging.basicConfig(
     # level=logging.CRITICAL + 1,
     level=logging.INFO,
+    # level=logging.DEBUG,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.FileHandler("python2025_statistics.log"),  # Log to a file

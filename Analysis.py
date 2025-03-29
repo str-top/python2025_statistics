@@ -148,7 +148,6 @@ class Analysis:
 
     def construct(self):
         self.days_of_results = datetime.now().replace(tzinfo=None) - timedelta(days=self.app.conf.days_of_results)
-        # Rest of the method remains exactly the same
         self.construct_students_data()
         self.remove_duplicate_attempts()
         num_students = len(self.app.students_data)
