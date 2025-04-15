@@ -40,7 +40,7 @@ class Conversion:
 
     def format_average_score_rating(self):
         # Calculate the threshold for half of the tests
-        half_tests_threshold = len(self.app.students_tests) / 2
+        half_tests_threshold = len(self.app.sorted_tests) / 2
 
         # Formatting average score rating
         score_rating = "## Рейтинг по проценту правильных ответов\n```\n"
